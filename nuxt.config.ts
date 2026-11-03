@@ -1,14 +1,18 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+  compatibilityDate: '2025-07-01',
   css: ['~/assets/css/tailwind.css'],
   vite: { plugins: [tailwindcss()] },
-  modules: ['shadcn-nuxt'],
+  modules: ['shadcn-nuxt', '@nuxtjs/supabase'],
   shadcn: {
     prefix: '',
     componentDir: './components/ui',
+  },
+  supabase: {
+    redirect: false, // Tự viết route middleware để hiểu auth
+    useSsrCookies: true,
+    types: false, // Tạo DTO thủ công; không cần gen Supabase DB types
   },
 })
