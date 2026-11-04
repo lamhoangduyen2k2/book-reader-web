@@ -11,8 +11,8 @@ export default defineNuxtConfig({
     componentDir: './components/ui',
   },
   supabase: {
-    redirect: false, // Tự viết route middleware để hiểu auth
+    redirect: false,    // Tự viết route middleware để hiểu auth
     useSsrCookies: true,
-    types: false, // Tạo DTO thủ công; không cần gen Supabase DB types
+    types: false,      // M1: tạo type DTO thủ công; về sau sẽ gen Supabase DB types
   },
 })

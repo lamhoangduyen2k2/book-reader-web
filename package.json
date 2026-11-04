@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@lucide/vue": "^1.66.0",
-    "@nuxtjs/supabase": "^2.1.0",
     "@vueuse/core": "^15.0.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.1",
@@ -28,6 +27,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@nuxtjs/supabase": "^2.1.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.20.5",
     "dotenv": "^18.0.9",

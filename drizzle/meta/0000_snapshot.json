@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "id": "ebf5d86d-bab4-4694-b2c8-edce68e94fbc",
+=======
+  "id": "80a4d53d-4314-45ea-96b9-1e3b040b2df3",
+>>>>>>> 639d8cbbef938066f5d10b0c5cf64be7439afa9f
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -35,7 +39,11 @@
         },
         "visibility": {
           "name": "visibility",
+<<<<<<< HEAD
           "type": "varchar",
+=======
+          "type": "text",
+>>>>>>> 639d8cbbef938066f5d10b0c5cf64be7439afa9f
           "primaryKey": false,
           "notNull": true,
           "default": "'private'"
@@ -124,7 +132,11 @@
         },
         "role": {
           "name": "role",
+<<<<<<< HEAD
           "type": "varchar",
+=======
+          "type": "text",
+>>>>>>> 639d8cbbef938066f5d10b0c5cf64be7439afa9f
           "primaryKey": false,
           "notNull": true,
           "default": "'user'"
