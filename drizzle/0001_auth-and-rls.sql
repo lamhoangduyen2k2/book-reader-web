@@ -32,3 +32,6 @@ create trigger on_auth_user_created
 -- Hàm trigger chạy với quyền definer, không mở quyền gọi RPC ra ngoài.
 revoke all on function public.handle_new_user() from public, anon, authenticated;
 --> statement-breakpoint
+
+-- Không dựa vào default GRANT. Thu hồi trước, cấp lại đúng quyền.
+revoke all on table public.profiles from anon, authenticated;
