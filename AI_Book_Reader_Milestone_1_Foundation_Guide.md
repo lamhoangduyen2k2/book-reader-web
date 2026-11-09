@@ -548,7 +548,7 @@ using (
 create policy "books_insert_private"
 on public.books
 for insert
-to authenticated
+to authenticated 
 with check (
   owner_id = (select auth.uid())
   and visibility = 'private'
