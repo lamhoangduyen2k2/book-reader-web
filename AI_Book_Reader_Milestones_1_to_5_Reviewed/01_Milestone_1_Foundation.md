@@ -1,7 +1,10 @@
 # AI Book Reader — Milestone 1: Foundation
 
+> **Bản rà soát v2 · 16/11/2026.** Đọc `00_README_START_HERE.md` trước. Mốc tương thích xác nhận: `@nuxtjs/supabase@2.1.0`; các dependency còn lại cần đối chiếu lockfile thực tế. Không ghi đè migrations đã apply. Code minh họa chưa chạy E2E trên project thật.
+
+
 **Giáo trình thực hành từ đầu đến cuối | Nuxt 3 + TypeScript + Tailwind v4 + shadcn-vue + Supabase Auth/PostgreSQL + Drizzle ORM**  
-**Cập nhật tài liệu:** 02/11/2026  
+**Cập nhật tài liệu:** 16/11/2026 — bản rà soát v2  
 **Đối tượng:** Người học frontend, backend, database và chuẩn bị học AI Application.  
 **Môi trường hướng dẫn:** Windows 10/11, PowerShell, VS Code/WebStorm, Node.js 22, pnpm; Supabase Cloud Free.
 
@@ -11,7 +14,7 @@
 
 ## Mục lục nhanh
 
-- [0–2. Kết quả, chuẩn bị, tạo Nuxt 3](#0-thành-quả-cuối-cùng)  #Đang ở bước này
+- [0–2. Kết quả, chuẩn bị, tạo Nuxt 3](#0-thành-quả-cuối-cùng)
 - [3–4. Giao diện và Supabase](#3-cài-ui-tailwind-css-v4-và-shadcn-vue)
 - [5. Database + migration + RLS](#5-database-với-drizzle-schema-và-migration)
 - [6. API server và validation](#6-tạo-kiểu-dữ-liệu-và-api-server)
@@ -48,7 +51,7 @@ Trình duyệt (Nuxt pages/components)
   └─ $fetch('/api/...')
        ↓
 Nitro API (server/api)
-  ├─ serverSupabaseUser(event) → xác minh danh tính
+  ├─ requireUser(event) → xác minh danh tính
   ├─ Zod → xác minh dữ liệu nhập
   └─ serverSupabaseClient(event) → truy vấn DB mang danh tính user
        ↓
@@ -83,6 +86,8 @@ corepack pnpm --version
 ```
 
 Nếu `corepack` không có sẵn, có thể cài pnpm theo hướng dẫn chính thức: <https://pnpm.io/installation>. Kiểm tra lại bằng `pnpm -v`.
+
+**Version gate:** giữ Nuxt 3 hiện tại, `@nuxtjs/supabase` đúng 2.1.0. Ghi `node -v`, `pnpm -v`, `pnpm list --depth 0` vào note nội bộ; commit lockfile và field `packageManager`; CI dùng đúng bản đã ghi. Không tự nâng cả dependency tree. Chưa có package.json/pnpm-lock.yaml thật nên không thể pin chính xác mọi package của bạn.
 
 **Tài khoản cần có:** [Supabase Dashboard](https://supabase.com/dashboard), tài khoản GitHub/GitLab (tùy chọn để lưu source). **Không cần đăng ký dịch vụ AI** ở phần Foundation.
 
@@ -126,9 +131,9 @@ File `tsconfig.json` nên giữ dạng đơn giản:
 
 ### Checkpoint A
 
-- [ ] `pnpm dev` chạy bình thường.
-- [ ] Mở được `http://localhost:3000`.
-- [ ] Dự án dùng **Nuxt 3**, không phải 4.
+- [x] `pnpm dev` chạy bình thường.
+- [x] Mở được `http://localhost:3000`.
+- [x] Dự án dùng **Nuxt 3**, không phải 4.
 
 ---
 
@@ -141,7 +146,8 @@ Dừng dev server bằng `Ctrl+C`:
 ```powershell
 pnpm add -D tailwindcss @tailwindcss/vite
 pnpm add -D shadcn-nuxt
-pnpm add -D typescript vue-tsc
+pnpm add -D -E typescript@5.9.3
+pnpm add -D vue-tsc
 ```
 
 Tạo thư mục `assets/css/` và file:
@@ -170,6 +176,8 @@ export default defineNuxtConfig({
 ```
 
 > `compatibilityDate` là mốc tương thích cấu hình; không bắt buộc phải trùng hôm nay. Nếu template Nuxt đã tạo mốc khác thì giữ mốc đó.
+
+**Nếu đã setup:** giữ `pnpm-lock.yaml` đang chạy ổn; không chạy lại init/CLI latest một cách mù quáng. TypeScript 5.9.3 là baseline tham khảo cho lỗi Vue SFC `Failed to resolve extends base type`, không bảo đảm mọi tổ hợp Vue/reka-ui. Kiểm tra `pnpm list nuxt vue typescript vue-tsc reka-ui shadcn-nuxt --depth 0`, kiểm tra peer dependencies trước khi đổi.
 
 ### Bước 3.2 — Khởi tạo shadcn-vue
 
@@ -223,14 +231,16 @@ Chạy lại `pnpm dev`, xác nhận button có style. `Button` được `shadcn
 3. Chờ project được tạo, vào phần **Connect / Project URL / API Keys**.
 4. Lấy **Project URL** và **Publishable key** (`sb_publishable_...`). Đừng lấy `secret` key cho frontend.
 5. Vào **Authentication → Providers → Email** và bật email/password.
-6. Vào **Authentication → URL Configuration**: đặt **Site URL** là `http://localhost:3000`; thêm `http://localhost:3000/confirm` vào **Redirect URLs**.
+6. Trong Security khi tạo project: bật Data API, tắt Automatically expose new tables, bật automatic RLS. Luôn bật RLS bằng migration dù đã chọn tự động.
+7. Vào **Authentication → URL Configuration**: đặt **Site URL** là `http://localhost:3000`; thêm `http://localhost:3000/confirm` vào **Redirect URLs**.
 
 **Giới hạn email rất dễ mắc:** trên hosted Supabase Free, email mặc định chỉ gửi đến email thành viên trong Supabase organization và có rate limit rất thấp (tài liệu hiện ghi khoảng 2 email/giờ). Hãy thử với email thuộc team; khi cần test nhiều tài khoản, có thể tạo tài khoản test đã xác nhận trong Dashboard → Authentication → Users; hoặc cấu hình SMTP riêng. Đừng tắt email confirmation trong ứng dụng thực tế chỉ để né vấn đề này.
 
 ### Bước 4.2 — Cài Supabase Nuxt module
 
 ```powershell
-pnpm add @nuxtjs/supabase
+pnpm add -D -E @nuxtjs/supabase@2.1.0
+pnpm add @supabase/supabase-js
 ```
 
 Tạo **`.env`** ở root:
@@ -238,7 +248,8 @@ Tạo **`.env`** ở root:
 ```dotenv
 NUXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 NUXT_PUBLIC_SUPABASE_KEY=YOUR_PUBLISHABLE_KEY
-DATABASE_URL=postgresql://YOUR_DB_USER:YOUR_URL_ENCODED_PASSWORD@YOUR_POOLER_HOST:5432/postgres
+DATABASE_URL=postgresql://YOUR_DB_USER:YOUR_URL_ENCODED_PASSWORD@YOUR_POOLER_HOST:5432/postgres?sslmode=require
+APP_ORIGIN=http://localhost:3000
 ```
 
 `DATABASE_URL`: copy từ **Supabase → Connect → Session pooler** (hữu ích khi mạng không hỗ trợ IPv6). Không thay chuỗi mẫu bằng `YOUR_...` nếu chưa xác định chính xác URL. Nếu mật khẩu có ký tự `@`, `#`, `/`, `:` ... phải URL-encode phần password; cách dễ nhất là sử dụng connection string Supabase cung cấp và thay placeholder một cách an toàn.
@@ -249,6 +260,7 @@ Tạo **`.env.example`** để commit (KHÔNG có secret thật):
 NUXT_PUBLIC_SUPABASE_URL=
 NUXT_PUBLIC_SUPABASE_KEY=
 DATABASE_URL=
+APP_ORIGIN=http://localhost:3000
 ```
 
 Kiểm tra **`.gitignore`** có:
@@ -303,6 +315,7 @@ export default defineNuxtConfig({
 ### Bước 5.1 — Cài dependency
 
 ```powershell
+
 pnpm add drizzle-orm postgres zod
 pnpm add -D drizzle-kit dotenv tsx
 ```
@@ -425,152 +438,110 @@ Mở file `.sql` mới tạo, **thay toàn bộ nội dung** bằng đoạn SQL 
 **`drizzle/<custom-migration>.sql`**:
 
 ```sql
-
--- ======================================================
--- AI BOOK READER - FOUNDATION AUTH & RLS MIGRATION
--- Yêu cầu: profiles và books đã được Drizzle tạo
--- ======================================================
-
--- 1. Liên kết profiles với Supabase Auth
+-- Link profiles -> Supabase Auth. Supabase quản lý auth.users.
 alter table public.profiles
   add constraint profiles_auth_user_fk
-  foreign key (id)
-  references auth.users(id)
-  on delete cascade;
+  foreign key (id) references auth.users(id) on delete cascade;
 --> statement-breakpoint
 
--- 2. Tạo schema nội bộ cho privileged functions
+-- Nội bộ, không expose qua Data API.
 create schema if not exists app_private;
 --> statement-breakpoint
-
-revoke all on schema app_private from PUBLIC;
+revoke all on schema app_private from PUBLIC, anon, authenticated;
 --> statement-breakpoint
-
--- 3. Tự tạo profile sau khi user đăng ký
+-- Tự động tạo profile ngay khi auth.users có user mới.
 create function app_private.handle_new_user()
 returns trigger
 language plpgsql
-security definer
-set search_path = ''
+security definer set search_path = ''
 as $$
 begin
   insert into public.profiles (id, display_name)
   values (
     new.id,
-    left(
-      coalesce(
-        nullif(new.raw_user_meta_data ->> 'display_name', ''),
-        split_part(new.email, '@', 1)
-      ),
-      100
-    )
+    left(coalesce(nullif(btrim(new.raw_user_meta_data ->> 'display_name'), ''),
+                  nullif(split_part(new.email, '@', 1), ''), 'Reader'), 100)
   );
-
   return new;
 end;
 $$;
 --> statement-breakpoint
 
--- 4. Liên kết function với auth.users
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row
-  execute function app_private.handle_new_user();
+  for each row execute function app_private.handle_new_user();
 --> statement-breakpoint
 
--- 5. Không cấp quyền gọi trực tiếp function
-revoke all on function app_private.handle_new_user()
-from PUBLIC, anon, authenticated;
+-- Hàm trigger chạy với quyền definer, không mở quyền gọi RPC ra ngoài.
+revoke all on function app_private.handle_new_user() from public, anon, authenticated;
 --> statement-breakpoint
 
--- 6. Thu hồi quyền bảng
-revoke all on table public.profiles
-from PUBLIC, anon, authenticated;
+-- Không dựa vào default GRANT. Thu hồi trước, cấp lại đúng quyền.
+revoke all on table public.profiles from PUBLIC, anon, authenticated;
+--> statement-breakpoint
+revoke all on table public.books from PUBLIC, anon, authenticated;
 --> statement-breakpoint
 
-revoke all on table public.books
-from PUBLIC, anon, authenticated;
+grant select on table public.profiles to authenticated;
+--> statement-breakpoint
+grant select on table public.books to anon;
+--> statement-breakpoint
+grant select on table public.books to authenticated;
+--> statement-breakpoint
+grant insert (title, author, owner_id, visibility) on table public.books to authenticated;
 --> statement-breakpoint
 
--- 7. Cấp lại đúng quyền của Milestone 1
-grant select on table public.profiles
-to authenticated;
+alter table public.profiles enable row level security;
+--> statement-breakpoint
+alter table public.books enable row level security;
 --> statement-breakpoint
 
-grant select on table public.books
-to anon;
---> statement-breakpoint
-
-grant select, insert on table public.books
-to authenticated;
---> statement-breakpoint
-
--- 8. Bật RLS
-alter table public.profiles
-enable row level security;
---> statement-breakpoint
-
-alter table public.books
-enable row level security;
---> statement-breakpoint
-
--- 9. Người dùng chỉ đọc profile của mình
+-- User chỉ được xem profile của chính mình.
 create policy "profiles_select_own"
-on public.profiles
-for select
-to authenticated
-using (
-  id = (select auth.uid())
-);
+on public.profiles for select to authenticated
+using (id = (select auth.uid()));
 --> statement-breakpoint
 
--- 10. Mọi người có quyền SELECT chỉ xem sách public
+-- Ai cũng được xem sách public.
 create policy "books_select_public"
-on public.books
-for select
-to anon, authenticated
-using (
-  visibility = 'public'
-);
+on public.books for select to anon, authenticated
+using (visibility = 'public');
 --> statement-breakpoint
 
--- 11. Người dùng đọc sách thuộc sở hữu của mình
+-- User chỉ được xem sách private của mình.
 create policy "books_select_own"
-on public.books
-for select
-to authenticated
-using (
-  owner_id = (select auth.uid())
-);
+on public.books for select to authenticated
+using (owner_id = (select auth.uid()));
 --> statement-breakpoint
 
--- 12. Người dùng tạo sách private của chính mình
+-- User thường chỉ tạo sách private do chính mình sở hữu.
 create policy "books_insert_private"
-on public.books
-for insert
-to authenticated 
+on public.books for insert to authenticated
 with check (
   owner_id = (select auth.uid())
   and visibility = 'private'
 );
 --> statement-breakpoint
 
--- 13. Admin tạo sách public của chính mình
+-- Admin có quyền tạo sách public, nhưng cũng phải tự là owner.
+-- Role ở bảng profiles chỉ được chỉnh bởi trusted backend/admin SQL.
 create policy "books_admin_insert_public"
-on public.books
-for insert
-to authenticated
+on public.books for insert to authenticated
 with check (
   owner_id = (select auth.uid())
   and visibility = 'public'
   and exists (
-    select 1
-    from public.profiles as p
-    where p.id = (select auth.uid())
-      and p.role = 'admin'
+    select 1 from public.profiles as p
+    where p.id = (select auth.uid()) and p.role = 'admin'
   )
 );
 ```
+
+**GRANT INSERT theo cột:** user chỉ được gán title/author/owner_id/visibility. ID, created_at do DB mặc định; đến M3, ai_consent_at và ai_status không tự động được phép INSERT. Dùng `has_column_privilege` để kiểm tra, không chỉ `has_table_privilege`. PostgreSQL mặc định không grant quyền bảng cho PUBLIC; REVOKE tường minh là defense-in-depth.
+
+**Kiểm tra quyền sau migrate:** `has_table_privilege('authenticated','public.books','INSERT')` phải là false (không có quyền trên toàn bảng), nhưng `has_column_privilege('authenticated','public.books','title','INSERT')` là true; `id` và `created_at` là false. Nếu đã có grant theo cột từ migration khác hoặc inherited roles thì phải audit riêng.
+
+**Bảng cũ:** người đang làm M1 theo tài liệu v1 hãy đọc file 06, không chạy lại `CREATE TRIGGER`/FK/policy cũ.
 
 **Rất quan trọng:** Không tạo API cho phép cập nhật trường `profiles.role`. Vai trò admin được cấp bằng SQL Editor cho tài khoản đáng tin cậy ở bước 10. Không lấy `role` từ dữ liệu người dùng tự gửi hoặc `user_metadata`.
 
@@ -654,6 +625,53 @@ pnpm db:check
 
 Khi Vue gọi `$fetch('/api/books')`, request tới file `server/api/books/index.get.ts` (Nitro). Server xác thực user, dùng Supabase client với session hiện tại, truy vấn dữ liệu; PostgreSQL quyết định row nào được trả về nhờ RLS.
 
+### Bước 6.0 — Chuẩn hóa xác thực cho @nuxtjs/supabase 2.1.0 (BẮT BUỘC ở cả 5 milestone)
+
+Ở tag v2.1.0, `serverSupabaseUser(event)` trả JWT claims (`sub`, không phải `id`) và có thể throw khi `getClaims()` lỗi. Để tất cả API dùng cùng một contract, ta viết helper trả đối tượng **User** từ `auth.getUser()`. Như vậy mọi `user.id` phía server dưới đây đều có nguồn rõ ràng. Không dùng session cookie chưa xác minh để cấp quyền. `useSupabaseUser()` ở UI vẫn là claims (`user.value?.sub`), dùng để hiển thị/điều hướng, không dùng cho authorization backend.
+
+**`server/utils/require-user.ts`**:
+
+```ts
+import { serverSupabaseClient } from '#supabase/server'
+
+export async function requireUser(event: Parameters<typeof serverSupabaseClient>[0]) {
+  const sb = await serverSupabaseClient(event)
+  const { data, error } = await sb.auth.getUser()
+  if (error) {
+    if (error.name === 'AuthSessionMissingError' || error.status === 400
+      || error.status === 401 || error.status === 403) {
+      throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+    }
+    throw createError({ statusCode: 503, statusMessage: 'Authentication unavailable' })
+  }
+  if (!data.user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  return data.user
+}
+```
+
+`getUser()` xác thực qua Auth server, tốn thêm network round trip nhưng giúp thống nhất kiểu `User`. Không truyền JWT/userId tự khai báo từ body để giả danh. User-scoped client vẫn phải thực thi RLS. Kiểm tra session hết hạn, bị thu hồi, thiếu cookie, Auth service không khả dụng; không log token.
+
+### Bước 6.0b — CSRF và cache riêng tư ngay từ Foundation
+
+Thêm `APP_ORIGIN=http://localhost:3000` vào `.env` và `.env.example` (khi deploy đổi thành HTTPS origin thật). Tạo middleware **`server/middleware/security.ts`**:
+
+```ts
+export default defineEventHandler(event => {
+  // Không cache HTML SSR hoặc API có session tại CDN/shared proxy.
+  setHeader(event, 'Cache-Control', 'private, no-store')
+  setHeader(event, 'X-Content-Type-Options', 'nosniff')
+  const pathname = getRequestURL(event).pathname
+  if (!pathname.startsWith('/api/')) return
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(getMethod(event))) return
+  const expected = process.env.APP_ORIGIN
+  if (!expected) throw createError({ statusCode: 503, statusMessage: 'Origin policy not configured' })
+  if (getHeader(event, 'origin') !== new URL(expected).origin)
+    throw createError({ statusCode: 403, statusMessage: 'Invalid request origin' })
+})
+```
+
+DevTools/cURL phải gửi đúng Origin; middleware không thay thế Auth. Không dùng prerender/SWR/ISR cho route chứa dữ liệu theo session. M5 sẽ kiểm thử lại; **không tạo middleware trùng**. Tắt cache ở reverse proxy. Với SSR GET dùng `useFetch` hoặc `useRequestFetch()` để chuyển cookie; `$fetch` server-side thuần không tự forward cookie.
+
 ### Bước 6.1 — Shared DTO
 
 Tạo **`shared/types/book.ts`**:
@@ -683,15 +701,26 @@ Tạo **`server/api/books/index.get.ts`**:
 
 ```ts
 import { serverSupabaseClient } from '#supabase/server'
+import { requireUser } from '~/server/utils/require-user'
 import type { BookDto } from '~/shared/types/book'
 
 export default defineEventHandler(async (event): Promise<BookDto[]> => {
   // Dùng cookie/session của request; RLS sẽ lọc bản ghi.
   const supabase = await serverSupabaseClient(event)
-  const { data, error } = await supabase
-    .from('books')
+  const scope = getQuery(event).scope ?? 'all'
+  if (scope !== 'public' && scope !== 'private' && scope !== 'all') {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid scope' })
+  }
+  let query = supabase.from('books')
     .select('id, title, author, owner_id, visibility, created_at')
+  if (scope !== 'all') query = query.eq('visibility', scope)
+  if (scope === 'private') {
+    const user = await requireUser(event)
+    query = query.eq('owner_id', user.id)
+  }
+  const { data, error } = await query
     .order('created_at', { ascending: false })
+    .order('id', { ascending: true })
     .limit(50)
 
   if (error) {
@@ -703,20 +732,18 @@ export default defineEventHandler(async (event): Promise<BookDto[]> => {
 })
 ```
 
-Không có session: RLS chỉ trả sách public. Có session: RLS trả sách public và sách của user hiện tại.
+Mặc định `scope=all` giữ hành vi M1 cũ (RLS trả public + own nếu login). Hai trang dùng `scope=public` hoặc `scope=private` trước LIMIT, tránh sách private chiếm hết 50 dòng của Public Library. Khi cần nhiều hơn 50, thêm pagination ổn định.
 
 ### Bước 6.3 — API `GET /api/me`
 
 Tạo **`server/api/me.get.ts`**:
 
 ```ts
-import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseClient } from '#supabase/server'
+import { requireUser } from '~/server/utils/require-user'
 
 export default defineEventHandler(async (event) => {
-  const user = await serverSupabaseUser(event)
-  if (!user) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
-  }
+  const user = await requireUser(event)
 
   const supabase = await serverSupabaseClient(event)
   const { data, error } = await supabase
@@ -752,14 +779,12 @@ export const createBookSchema = z.object({
 Tạo **`server/api/books/index.post.ts`**:
 
 ```ts
-import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseClient } from '#supabase/server'
+import { requireUser } from '~/server/utils/require-user'
 import { createBookSchema } from '~/server/modules/books/book.schema'
 
 export default defineEventHandler(async (event) => {
-  const user = await serverSupabaseUser(event)
-  if (!user) {
-    throw createError({ statusCode: 401, statusMessage: 'Login required' })
-  }
+  const user = await requireUser(event)
 
   const payload = createBookSchema.safeParse(await readBody(event))
   if (!payload.success) {
@@ -808,13 +833,11 @@ export default defineEventHandler(async (event) => {
 Tạo **`server/api/admin/ping.get.ts`**:
 
 ```ts
-import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseClient } from '#supabase/server'
+import { requireUser } from '~/server/utils/require-user'
 
 export default defineEventHandler(async (event) => {
-  const user = await serverSupabaseUser(event)
-  if (!user) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
-  }
+  const user = await requireUser(event)
 
   const supabase = await serverSupabaseClient(event)
   const { data, error } = await supabase
@@ -934,7 +957,7 @@ async function register() {
 const user = useSupabaseUser()
 
 watch(user, async (value) => {
-  if (value) await navigateTo('/my-books', { replace: true })
+  if (value) await navigateTo('/my-books', { replace: true, external: true })
 }, { immediate: true })
 </script>
 
@@ -975,12 +998,12 @@ async function login() {
     if (error) throw error
 
     const target = route.query.redirect
-    const safeTarget = typeof target === 'string'
-      && target.startsWith('/') && !target.startsWith('//')
-      ? target
-      : '/my-books'
+    // Allowlist nội bộ; không tin cả URL từ query.
+    const safeTarget = typeof target === 'string' &&
+      (/^\/(my-books|admin)$/.test(target) || /^\/read\/[0-9a-f-]{36}$/i.test(target))
+      ? target : '/my-books' 
 
-    await navigateTo(safeTarget, { replace: true })
+    await navigateTo(safeTarget, { replace: true, external: true })
   } catch (error) {
     errorText.value = error instanceof Error ? error.message : 'Đăng nhập thất bại.'
   } finally {
@@ -1011,7 +1034,7 @@ async function login() {
 </template>
 ```
 
-> `safeTarget` kiểm tra đích redirect dạng đường dẫn nội bộ để giảm open-redirect. Trong ứng dụng lớn, có thể dùng allowlist các route đích thay vì chỉ kiểm tra prefix.
+> `safeTarget` chỉ chấp nhận route allowlist. Reload toàn trang sau đổi danh tính để xóa Nuxt client state và dữ liệu riêng tư khỏi phiên UI cũ.
 
 ### Bước 7.5 — Header có logout
 
@@ -1028,9 +1051,9 @@ async function logout() {
   try {
     const { error } = await supabase.auth.signOut()
     if (error) throw error
-    await navigateTo('/', { replace: true })
+    await navigateTo('/', { replace: true, external: true })
   } catch (error) {
-    console.error('Logout failed', error)
+    console.error('Logout failed')
     alert('Đăng xuất thất bại. Vui lòng thử lại.')
   } finally {
     signingOut.value = false
@@ -1145,7 +1168,7 @@ async function submit() {
 <script setup lang="ts">
 import type { BookDto } from '~/shared/types/book'
 
-const { data: books, pending, error, refresh } = await useFetch<BookDto[]>('/api/books', {
+const { data: books, pending, error, refresh } = await useFetch<BookDto[]>('/api/books?scope=public', {
   default: () => [],
 })
 
@@ -1196,7 +1219,7 @@ import type { BookDto } from '~/shared/types/book'
 
 definePageMeta({ middleware: 'auth' })
 
-const { data: books, pending, error, refresh } = await useFetch<BookDto[]>('/api/books', {
+const { data: books, pending, error, refresh } = await useFetch<BookDto[]>('/api/books?scope=private', {
   default: () => [],
 })
 const privateBooks = computed(() => books.value.filter(book => book.visibility === 'private'))
@@ -1345,6 +1368,8 @@ ai-book-reader/
 │   ├── my-books.vue
 │   └── admin.vue
 ├── server/
+│   ├── middleware/security.ts   # Origin + cache policy
+│   ├── utils/require-user.ts     # verified User contract
 │   ├── api/
 │   │   ├── me.get.ts
 │   │   ├── admin/ping.get.ts
