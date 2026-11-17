@@ -1,5 +1,5 @@
 import { serverSupabaseClient } from "#supabase/server"
-import { BookDto } from "~/shared/types/book"
+import { type BookDto } from "~/shared/types/book"
 
 export default defineEventHandler(async (event): Promise<BookDto[]> => {
     // Dùng cookie/session của request để RLS sẽ lọc bản ghi.

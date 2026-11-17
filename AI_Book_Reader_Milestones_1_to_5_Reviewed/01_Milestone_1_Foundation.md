@@ -612,10 +612,10 @@ pnpm db:check
 
 ### Checkpoint C
 
-- [ ] Migration thành công, không chạy lặp vô hạn.
-- [ ] Có `profiles`, `books`, khóa ngoại, RLS và 5 policies (`profiles` 1, `books` 4).
-- [ ] `pnpm db:check` thành công.
-- [ ] Không có mật khẩu trong Git.
+- [x] Migration thành công, không chạy lặp vô hạn.
+- [x] Có `profiles`, `books`, khóa ngoại, RLS và 5 policies (`profiles` 1, `books` 4).
+- [x] `pnpm db:check` thành công.
+- [x] Không có mật khẩu trong Git.
 
 ---
 
