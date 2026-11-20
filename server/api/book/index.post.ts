@@ -13,14 +13,32 @@ export default defineEventHandler(async (event) => {
     const supabase = await serverSupabaseClient(event);
 
     if (payload.data.visibility === 'public') {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
 
-    if (error || profile?.role !== 'admin') {
-      throw createError({ statusCode: 403, statusMessage: 'Admin required' })
+      if (error || profile?.role !== 'admin') {
+        throw createError({ statusCode: 403, statusMessage: 'Admin required' })
+      }
     }
-  }
+
+    const { data, error } = await supabase.from('books')
+                                          .insert({
+                                            title: payload.data.title,
+                                            author: payload.data.author,
+                                            visibility: payload.data.visibility,
+                                            owner_id: user.id, //Chỉ được insert ở phía server (không để user nhập vào)
+                                          })
+                                          .select('id, title, author, owner_id, visibility, created_at')
+                                          .single()
+    
+    if (error || !data) {
+      console.error('[POST /api/books]', error?.message)
+      throw createError({ statusCode: 500, statusMessage: 'Cannot create book' })
+    }
+
+    setResponseStatus(event, 201)
+    return data
 })
